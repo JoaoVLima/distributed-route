@@ -33,7 +33,7 @@ def publisher(channel, conection, exchange_name, body='hello world'):
     conection.close()
 
 
-def main(node_type, exchange_name):
+def main(node_type, exchange_name, body):
     conection = BlockingConnection()
     channel = conection.channel()
     channel.exchange_declare(exchange=exchange_name,
@@ -42,7 +42,7 @@ def main(node_type, exchange_name):
     if node_type == 'consumer':
         consumer(channel, conection, exchange_name)
     elif node_type == 'publisher':
-        publisher(channel, conection, exchange_name)
+        publisher(channel, conection, exchange_name, body)
     else:
         print('node_type error')
 
@@ -61,13 +61,15 @@ def get(array, key, default=None):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print(f'USO: {sys.argv[0]} <node_type=consumer> <exchange_name=exchange>')
+        print(f'USO: {sys.argv[0]} <node_type=consumer> <exchange_name=exchange> <body=hello_world>')
 
     node_type = 'consumer'
     # node_type = 'publisher'
     exchange_name = 'exchange'
+    body = 'hello_world'
 
     node_type = get(sys.argv, 1, default=node_type)
     exchange_name = get(sys.argv, 2, default=exchange_name)
+    body = get(sys.argv, 3, default=body)
 
-    main(node_type, exchange_name)
+    main(node_type, exchange_name, body)

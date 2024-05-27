@@ -28,7 +28,7 @@ def publisher(channel, conection, queue_name, exchange='', body='hello world'):
     conection.close()
 
 
-def main(node_type, queue_name):
+def main(node_type, queue_name, body):
     conection = BlockingConnection()
     channel = conection.channel()
     channel.queue_declare(queue=queue_name)
@@ -36,7 +36,7 @@ def main(node_type, queue_name):
     if node_type == 'consumer':
         consumer(channel, conection, queue_name)
     elif node_type == 'publisher':
-        publisher(channel, conection, queue_name)
+        publisher(channel, conection, queue_name, body=body)
     else:
         print('node_type error')
 
@@ -55,13 +55,15 @@ def get(array, key, default=None):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print(f'USO: {sys.argv[0]} <node_type=consumer> <queue_name=queue>')
+        print(f'USO: {sys.argv[0]} <node_type=consumer> <queue_name=queue> <body=hello_world>')
 
     node_type = 'consumer'
     # node_type = 'publisher'
     queue_name = 'queue'
+    body = 'hello_world'
 
     node_type = get(sys.argv, 1, default=node_type)
     queue_name = get(sys.argv, 2, default=queue_name)
+    body = get(sys.argv, 3, default=body)
 
-    main(node_type, queue_name)
+    main(node_type, queue_name, body)
