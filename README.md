@@ -5,7 +5,7 @@ A distributed route is used to manage and process messages(AMQP) across differen
 
 ```
 States = { STARTER, IDLE, VISITED, OK }
-    SINI = { STARTER, IDLE }
+    SINIT = { STARTER, IDLE }
     STERM = { OK }
 Constraints: { CN, TR, BL, UI }
 
