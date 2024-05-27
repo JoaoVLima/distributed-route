@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import sys
 import uuid
-
 from pika import BlockingConnection
 from enum import Enum
 
@@ -13,9 +12,15 @@ class States(Enum):
     OK = 'OK'
 
 
+class MessageTypes(Enum):
+    TOKEN = 'T'  # passes the token forward
+    BACKEDGE = 'B'  # notifies the detection of a “back-edge”
+    RETURN = 'R'  # returns the token in case of local termination
+
+
 class Node:
-    states = States
     state = ''
+    message_type = ''
     id = ''
     connection = None
     channel = None
@@ -50,10 +55,10 @@ class Starter(Node):
 
     def __init__(self, id, neighbor_nodes):
         super(Starter, self).__init__(id, neighbor_nodes)
-        self.state = self.states.STARTER
+        self.state = States.STARTER
 
     def run(self):
-        self.body = f'STARTER:{self.message}'
+        self.body = f'STARTER:T:{self.message}'
         for node in self.neighbor_nodes:
             self.channel.basic_publish(exchange='',
                                        routing_key=node,
@@ -67,7 +72,7 @@ class Idle(Node):
 
     def __init__(self, id, neighbor_nodes):
         super(Idle, self).__init__(id, neighbor_nodes)
-        self.state = self.states.IDLE
+        self.state = States.IDLE
 
         self.channel.queue_declare(queue=self.id, auto_delete=True)
 
@@ -84,13 +89,15 @@ class Idle(Node):
 
     def callback(self, channel, method, properties, body):
         body = body.decode().split(":")
-        if len(body) < 2:
-            print("body should be 'origin:message'")
+        if len(body) < 3:
+            print("body should be 'origin:type:message'")
         else:
             origin = body[0]
-            message = body[1]
-            if origin == "STARTER":
+            type = body[1]
+            message = body[2]
+            if origin == States.STARTER and type == MessageTypes.TOKEN:
                 self.send(message, from_starter=True)
+                self.state = States.VISITED
             else:
                 self.receiving(origin, message)
 
@@ -109,10 +116,10 @@ class Idle(Node):
 
     def receiving(self, origin, message):
         print(f'message received: "{origin}:{message}"')
-        if self.state == self.states.IDLE:
+        if self.state == States.IDLE:
             self.neighbor_nodes.remove(origin)
             self.send(message)
-            self.state = self.states.OK
+            self.state = States.OK
 
 
 def get(array, key, default=None):
